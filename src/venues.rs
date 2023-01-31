@@ -5,7 +5,7 @@ use serde_json::json;
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
 use rand::{Rng, thread_rng, random};
 use rand::distributions::Alphanumeric;
-use crate::exchange_traits::ExchangeFunctionality;
+use crate::venue_traits::VenueFunctionality;
 
 pub struct CoinbaseBook {
     pub name: String,
@@ -39,7 +39,7 @@ impl CoinbaseBook{
     }
 }
 
-impl ExchangeFunctionality for CoinbaseBook{
+impl VenueFunctionality for CoinbaseBook{
     fn subscribe(&self){
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
@@ -99,7 +99,7 @@ pub struct BinanceBook{
     pub limit: u32,
 }
 
-impl ExchangeFunctionality for BinanceBook{
+impl VenueFunctionality for BinanceBook{
     fn subscribe(&self) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
@@ -158,7 +158,7 @@ pub struct UpbitBook {
     pub codes: Vec<String>,
 }
 
-impl ExchangeFunctionality for UpbitBook{
+impl VenueFunctionality for UpbitBook{
     fn subscribe(&self) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()

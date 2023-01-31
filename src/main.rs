@@ -1,9 +1,9 @@
 mod venues;
-mod exchange_traits;
+mod venue_traits;
 
 use std::env;
 use venues::{BinanceBook, CoinbaseBook, UpbitBook};
-use exchange_traits::ExchangeFunctionality;
+use venue_traits::VenueFunctionality;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "full");
