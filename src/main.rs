@@ -27,7 +27,7 @@ fn main() {
         channel: String::from("level2"),
     };
 
-    coinbase.subscribe();
+    // coinbase.subscribe();
 
     let upbit: UpbitBook = UpbitBook {
         name: String::from("upbit"),
