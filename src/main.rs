@@ -1,8 +1,8 @@
-mod websockets;
+mod venues;
 mod exchange_traits;
 
 use std::env;
-use websockets::{BinanceBook, CoinbaseBook, UpbitBook};
+use venues::{BinanceBook, CoinbaseBook, UpbitBook};
 use exchange_traits::ExchangeFunctionality;
 
 fn main() {
@@ -37,6 +37,5 @@ fn main() {
     };
 
     // upbit.subscribe();
-
 
 }
