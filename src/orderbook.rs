@@ -60,16 +60,16 @@ impl Book {
                 }
             }
         };
+        let new_node = Box::new(Limit{
+            limit_price,
+            total_volume: size,
+            left_child: None,
+            right_child: None,
+        });
         loop {
             match current_node{
                 None => {
                         // if tree is not initialized
-                        let new_node = Box::new(Limit{
-                            limit_price,
-                            total_volume: size,
-                            left_child: None,
-                            right_child: None,
-                        });
                         current_node.replace(new_node);
                         update_minmax(current_node.as_ref().expect("Node must exist."));
                         break;
@@ -79,12 +79,6 @@ impl Book {
                         if node.right_child.is_some() {
                             current_node = &mut node.right_child;
                         } else {
-                            let new_node = Box::new(Limit{
-                                limit_price,
-                                total_volume: size,
-                                left_child: None,
-                                right_child: None,
-                            });
                             node.right_child = Some(new_node);
                             update_minmax(node);
                             break;
@@ -94,12 +88,6 @@ impl Book {
                             current_node = &mut node.left_child;
                         }
                         else{
-                            let new_node = Box::new(Limit{
-                                limit_price,
-                                total_volume: size,
-                                left_child: None,
-                                right_child: None,
-                            });
                             node.left_child = Some(new_node);
                             update_minmax(node);
                             break;
