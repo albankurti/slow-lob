@@ -118,26 +118,15 @@ impl Book {
     }
 
     fn cancel_limit(&mut self, limit_price: f64, side: bool) {
-
-    }
-
-    fn execute_order(&mut self, order_id: i32) {
-        // logic to execute the order with the given id
-    }
-
-    fn get_volume_at_limit(&self, limit: i32) -> i32 {
-        // logic to get the total volume of orders at the given limit price
-        0
+        todo!();
     }
 
     fn get_best_bid(&self) -> i32 {
-        // logic to get the highest buy limit price
-        0
+        todo!();
     }
 
     fn get_best_offer(&self) -> i32 {
-        // logic to get the lowest sell limit price
-        0
+        todo!();
     }
 
 }
