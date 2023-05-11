@@ -105,8 +105,8 @@ impl Limit {
                         n.right_child = Some(right);
                         // Recursively remove the successor
                         Self::remove(&mut n.right_child, n.limit_price);
-                        // The current node still remains
-                        Some(n.clone())
+                        // Return the node
+                        node.take()
                     }
                 };
             }
