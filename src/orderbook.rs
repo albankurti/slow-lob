@@ -60,15 +60,46 @@ impl Limit {
         }
     }
 
-    pub fn traverse(root: Option<&Box<Limit>>) {
-        if let Some(node) = root {
-            Limit::traverse(node.left_child.as_ref());
-            println!("{}", &node.limit_price);
-            Limit::traverse(node.right_child.as_ref());
+    pub fn insert(node: &mut Option<Box<Limit>>, limit_price: f64, total_volume: f64, tree: &mut Book, side: bool) -> Option<Box<Limit>>{
+        let mut current: &mut Option<Box<Limit>> = node;
+
+        while let Some(ref mut curr) = current {
+            if limit_price < curr.limit_price {
+                current = &mut curr.left_child;
+            } else if limit_price > curr.limit_price {
+                current = &mut curr.right_child;
+            } else {
+                curr.total_volume += total_volume;
+                return node.take();
+            }
         }
+        *current = Some(Box::new(Limit::new(limit_price, total_volume)));
+
+        // updating min and max of book
+        if side {
+            if let Some(ref mut node) = tree.highest_buy {
+                if limit_price > node.limit_price {
+                    tree.highest_buy = Some(Box::new(Limit::new(limit_price, total_volume)));
+                }
+            } else {
+                tree.highest_buy = Some(Box::new(Limit::new(limit_price, total_volume)));
+            }
+        } else {
+            if let Some(ref mut node) = tree.lowest_sell {
+                if limit_price < node.limit_price {
+                    tree.lowest_sell = Some(Box::new(Limit::new(limit_price, total_volume)));
+                }
+            } else {
+                tree.lowest_sell = Some(Box::new(Limit::new(limit_price, total_volume)));
+            }
+        }
+        println!("Inserting {}", limit_price);
+        Limit::print_tree(&node, "", false);
+        node.take()
     }
 
     pub fn remove(node: &mut Option<Box<Limit>>, limit_price: f64) {
+        // TODO: update min/max as well
         if let Some(ref mut n) = node {
             if limit_price < n.limit_price {
                 Self::remove(&mut n.left_child, limit_price);
@@ -111,18 +142,11 @@ impl Limit {
                 };
             }
         }
+        println!("Before Balancing");
+        Self::print_tree(&node.clone(), "", false);
+        println!("Balancing...");
+        Self::print_tree(&Some(Self::balance(&mut node.clone().unwrap()).clone()), "", false);
         println!("");
-        Self::print_tree(node, "", false);
-        println!("");
-    }
-
-    pub fn left(mut self, node: Limit) -> Self {
-        self.left_child = Some(Box::new(node));
-        self
-    }
-
-    pub fn right(mut self) -> Option<Box<Limit>> {
-        self.right_child
     }
 
     pub fn rotate_left(node: &mut Box<Limit>) {
@@ -155,7 +179,7 @@ impl Limit {
         }
     }
 
-    pub fn balance(node: &mut Box<Limit>) {
+    pub fn balance(node: &mut Box<Limit>) -> &mut Box<Limit> {
         if Limit::get_balance(node) > 1 {
             // Left heavy
             if Limit::get_balance(&mut node.left_child.as_mut().unwrap()) < 0 {
@@ -171,21 +195,10 @@ impl Limit {
             }
             Limit::rotate_left(node);
         }
+        // Self::print_tree(&Some(node.clone()), "", false);
+        node
     }
 
-    pub fn get_min(node: Box<Limit>) -> f64 {
-        // TODO: delete/drop the node as well before returning the limit_price
-        // initializing the search on the right child of the node
-        let mut res: Option<Box<Limit>> = node.right_child;
-        while let Some(curr) = res {
-            if let Some(left) = curr.left_child {
-                res = Some(left);
-            } else {
-                return curr.limit_price;
-            }
-        }
-        res.unwrap().limit_price
-    }
 }
 
 impl Book {
@@ -198,37 +211,4 @@ impl Book {
         }
     }
 
-    pub fn insert(&mut self, limit_price: f64, total_volume: f64, side: bool) {
-        let mut current = if side {
-            &mut self.buy_tree
-        } else {
-            &mut self.sell_tree
-        };
-        while let Some(ref mut node) = *current {
-            if node.limit_price < limit_price {
-                current = &mut node.left_child;
-            } else if node.limit_price > limit_price {
-                current = &mut node.right_child;
-            } else {
-                node.total_volume += total_volume;
-                return;
-            }
-        }
-        *current = Some(Box::new(Limit::new(limit_price, total_volume)));
-
-        // updating min and max of book
-        if side {
-            if let Some(ref mut node) = self.highest_buy {
-                if limit_price > node.limit_price {
-                    self.highest_buy = current.clone();
-                }
-            }
-        } else {
-            if let Some(ref mut node) = self.lowest_sell {
-                if limit_price < node.limit_price {
-                    self.lowest_sell = current.clone();
-                }
-            }
-        }
-    }
 }
