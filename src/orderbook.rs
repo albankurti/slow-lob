@@ -1,214 +1,36 @@
-use std::collections::VecDeque;
-use std::mem;
-use std::thread::current;
+#[path = "utils.rs"] mod utils;
+use std::cmp::Reverse;
+use ordered_float::NotNan;
+use std::collections::BTreeMap;
 
-/*
-Preliminary Orderbook data structure implementation
-Intended to create an AVL Tree soon
-*/
+type MinNonNan = Reverse<NotNan<f64>>;
+
 #[derive(Debug)]
 pub struct Book {
-    // root of buy side
-    pub buy_tree: Option<Box<Limit>>,
-    // root of sell side
-    pub sell_tree: Option<Box<Limit>>,
-    pub lowest_sell: Option<Box<Limit>>,
-    pub highest_buy: Option<Box<Limit>>,
+    pub buy_tree: BTreeMap<MinNonNan, Limit>,
+    pub sell_tree: BTreeMap<MinNonNan, Limit>
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Limit {
-    pub limit_price: f64,
-    pub total_volume: f64,
-    pub left_child: Option<Box<Limit>>,
-    pub right_child: Option<Box<Limit>>,
+    pub limit_price: MinNonNan,
+    pub total_volume: MinNonNan
 }
 
 impl Limit {
-    pub fn new(limit_price: f64, total_volume: f64) -> Self {
+    pub fn new(limit_price: MinNonNan, total_volume: MinNonNan) -> Self {
         Limit {
             limit_price: limit_price,
-            total_volume: total_volume,
-            left_child: None,
-            right_child: None,
+            total_volume: total_volume
         }
     }
-
-    pub fn print_tree(node: &Option<Box<Limit>>, prefix: &str, is_left: bool) {
-        if let Some(node) = node {
-            let _ = Self::print_tree(
-                &node.right_child,
-                &(prefix.to_string() + (if is_left { "│   " } else { "    " })),
-                false,
-            );
-
-            println!(
-                "{}{}{}{}{}, {}",
-                prefix,
-                if is_left { "└── " } else { "┌── " },
-                "",
-                node.limit_price,
-                "",
-                node.total_volume
-            );
-
-            let _ = Self::print_tree(
-                &node.left_child,
-                &(prefix.to_string() + (if is_left { "    " } else { "│   " })),
-                true,
-            );
-        }
-    }
-
-    pub fn insert(node: &mut Option<Box<Limit>>, limit_price: f64, total_volume: f64, tree: &mut Book, side: bool) -> Option<Box<Limit>>{
-        let mut current: &mut Option<Box<Limit>> = node;
-
-        while let Some(ref mut curr) = current {
-            if limit_price < curr.limit_price {
-                current = &mut curr.left_child;
-            } else if limit_price > curr.limit_price {
-                current = &mut curr.right_child;
-            } else {
-                curr.total_volume += total_volume;
-                return node.take();
-            }
-        }
-        *current = Some(Box::new(Limit::new(limit_price, total_volume)));
-
-        // updating min and max of book
-        if side {
-            if let Some(ref mut node) = tree.highest_buy {
-                if limit_price > node.limit_price {
-                    tree.highest_buy = Some(Box::new(Limit::new(limit_price, total_volume)));
-                }
-            } else {
-                tree.highest_buy = Some(Box::new(Limit::new(limit_price, total_volume)));
-            }
-        } else {
-            if let Some(ref mut node) = tree.lowest_sell {
-                if limit_price < node.limit_price {
-                    tree.lowest_sell = Some(Box::new(Limit::new(limit_price, total_volume)));
-                }
-            } else {
-                tree.lowest_sell = Some(Box::new(Limit::new(limit_price, total_volume)));
-            }
-        }
-        println!("Inserting {}", limit_price);
-        Limit::print_tree(&node, "", false);
-        node.take()
-    }
-
-    pub fn remove(node: &mut Option<Box<Limit>>, limit_price: f64) {
-        // TODO: update min/max as well
-        if let Some(ref mut n) = node {
-            if limit_price < n.limit_price {
-                Self::remove(&mut n.left_child, limit_price);
-            } else if limit_price > n.limit_price {
-                Self::remove(&mut n.right_child, limit_price);
-            } else {
-                println!("");
-                *node = match (n.left_child.take(), n.right_child.take()) {
-                    (None, None) => {
-                        println!("Replacing {:?} with None", n.limit_price);
-                        None
-                    }
-                    (Some(left), None) => {
-                        println!("Replacing {:?} with: {:?}", n.limit_price, left.limit_price);
-                        Some(left)
-                    }
-                    (None, Some(right)) => {
-                        println!(
-                            "Replacing {:?} with: {:?}",
-                            n.limit_price, right.limit_price
-                        );
-                        Some(right)
-                    }
-                    (Some(left), Some(right)) => {
-                        n.left_child = Some(left);
-                        let mut succ: &Box<Limit> = &right;
-                        while let Some(ref succ_right) = succ.left_child {
-                            succ = &succ_right;
-                        }
-                        println!("Replacing {:?} with: {:?}", n.limit_price, succ.limit_price);
-                        // Copy the successor's data to the current node
-                        n.limit_price = succ.limit_price;
-                        n.total_volume = succ.total_volume;
-                        n.right_child = Some(right);
-                        // Recursively remove the successor
-                        Self::remove(&mut n.right_child, n.limit_price);
-                        // Return the node
-                        node.take()
-                    }
-                };
-            }
-        }
-        println!("Before Balancing");
-        Self::print_tree(&node.clone(), "", false);
-        println!("Balancing...");
-        Self::print_tree(&Some(Self::balance(&mut node.clone().unwrap()).clone()), "", false);
-        println!("");
-    }
-
-    pub fn rotate_left(node: &mut Box<Limit>) {
-        let mut new_root = node.right_child.take().unwrap();
-        node.right_child = new_root.left_child.take();
-        new_root.left_child = Some(node.clone());
-        *node = new_root;
-    }
-
-    fn rotate_right(node: &mut Box<Limit>) {
-        let mut new_root = node.left_child.take().unwrap();
-        node.left_child = new_root.right_child.take();
-        new_root.right_child = Some(node.clone());
-        *node = new_root;
-    }
-
-    pub fn get_balance(node: &Box<Limit>) -> i32 {
-        Limit::get_height(&node.left_child) - Limit::get_height(&node.right_child)
-    }
-
-    pub fn get_height(node: &Option<Box<Limit>>) -> i32 {
-        match node {
-            None => 0,
-            Some(inner) => {
-                1 + std::cmp::max(
-                    Limit::get_height(&inner.left_child),
-                    Limit::get_height(&inner.right_child),
-                )
-            }
-        }
-    }
-
-    pub fn balance(node: &mut Box<Limit>) -> &mut Box<Limit> {
-        if Limit::get_balance(node) > 1 {
-            // Left heavy
-            if Limit::get_balance(&mut node.left_child.as_mut().unwrap()) < 0 {
-                // Left-Right case
-                Limit::rotate_left(&mut node.left_child.as_mut().unwrap());
-            }
-            Limit::rotate_right(node);
-        } else if Limit::get_balance(node) < -1 {
-            // Right heavy
-            if Limit::get_balance(&mut node.right_child.as_mut().unwrap()) > 0 {
-                // Right-Left case
-                Limit::rotate_right(&mut node.right_child.as_mut().unwrap());
-            }
-            Limit::rotate_left(node);
-        }
-        // Self::print_tree(&Some(node.clone()), "", false);
-        node
-    }
-
 }
 
 impl Book {
     pub fn new() -> Self {
         Book {
-            buy_tree: None,
-            sell_tree: None,
-            lowest_sell: None,
-            highest_buy: None,
+            buy_tree: BTreeMap::new(),
+            sell_tree: BTreeMap::new(),
         }
     }
-
 }
