@@ -25,10 +25,10 @@ pub struct Limit {
 impl Limit {
     pub fn new(limit_price: MinNonNan, volumes: Vec<(MinNonNan, String)>, total_volume: MinNonNan, last_update: chrono::DateTime<Local>) -> Self {
         Limit {
-            limit_price: limit_price,
-            volumes: volumes,
-            total_volume: total_volume,
-            last_update: last_update
+            limit_price,
+            volumes,
+            total_volume,
+            last_update
         }
     }
 }
