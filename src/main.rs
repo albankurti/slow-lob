@@ -1,38 +1,29 @@
 mod orderbook;
 mod utils;
 mod venues;
-use digest::typenum::Or;
-use orderbook::{Book, Limit};
+use orderbook::Book;
 use std::env;
-use bst_rs::{BinarySearchTree, IterativeBST, RecursiveBST};
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
-use std::cmp::Reverse;
-use ordered_float::NotNan;
-use utils::{to_float, print};
-// use venues::{binance::BinanceBook, coinbase::CoinbaseBook, upbit::UpbitBook, venue_traits::VenueFunctionality};
 use venues::binance::BinanceBook;
 use venues::coinbase::CoinbaseBook;
 use venues::upbit::UpbitBook;
 use venues::venue_traits::VenueFunctionality;
-use rand::{Rng, random};
 
 
-type MinNonNan = Reverse<NotNan<f64>>;
 fn main() {
-    // env::set_var("RUST_BACKTRACE", "full");
+    let mut book = Book::new();
+
+    let binance: BinanceBook = BinanceBook {
+       name: String::from("binance"),
+       base_ws: String::from("wss://ws-api.binance.com:443/ws-api/v3"),
+       symbol: String::from("BTCUSDT"),
+       method: String::from("depth"),
+       limit: 50,
+    };
+
+    binance.subscribe(&mut book.buy_tree, &mut book.sell_tree);
+
     // env::set_var("API_KEY", "");
     // env::set_var("API_SECRET", "");
-
-    // let binance: BinanceBook = BinanceBook {
-    //    name: String::from("binance"),
-    //    base_ws: String::from("wss://ws-api.binance.com:443/ws-api/v3"),
-    //    symbol: String::from("BTCUSDT"),
-    //    method: String::from("depth"),
-    //    limit: 50,
-    // };
-
-    // binance.subscribe();
 
     // let coinbase: CoinbaseBook = CoinbaseBook {
     //    name: String::from("coinbase"),
@@ -43,7 +34,7 @@ fn main() {
     //    channel: String::from("level2"),
     // };
 
-    // coinbase.subscribe();
+    // coinbase.subscribe(&mut book.buy_tree, &mut book.sell_tree);
 
     // let upbit: UpbitBook = UpbitBook {
     //    name: String::from("upbit"),
@@ -52,19 +43,6 @@ fn main() {
     //    codes: vec![String::from("USDT-BTC")],
     // };
 
-    // upbit.subscribe();
-    
-    
-
-    // let mut bst: BTreeMap<MinNonNan, Limit> = BTreeMap::new();
-
-    // for _ in 1..10000000{
-    //     let limit = Limit {
-    //         limit_price: to_float(rand::thread_rng().gen_range(0.0..=1.0)),
-    //         total_volume: to_float(rand::thread_rng().gen_range(0.0..=1.0)),
-    //         ..Default::default()
-    //     };
-    //     bst.insert(limit.limit_price, limit);
-    // }
+    // upbit.subscribe(&mut book.buy_tree, &mut book.sell_tree);
 
 }

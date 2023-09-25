@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
 use crate::utils::{from_float, print};
 use crate::venues::venue_traits::VenueFunctionality;
-use crate::orderbook::Limit;
+use crate::orderbook::{Limit, Book};
 use std::cmp::Reverse;
 use ordered_float::NotNan;
+
 type MinNonNan = Reverse<NotNan<f64>>;
 
 pub struct CoinbaseBook {
@@ -121,18 +122,15 @@ impl VenueFunctionality for CoinbaseBook {
         match serde_json::from_str::<CoinbaseResponse>(&data) {
             Ok(res) => {
                 for update in res.events[0].updates.iter(){
+                    let price = from_float(update.price_level.parse().unwrap());
+                    let volume = vec![(from_float(update.new_quantity.parse().unwrap()), self.name.clone())];
+                    let mut limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
                     match update.side.as_str() {
                         "ask" | "offer" => {
-                            let price = from_float(update.price_level.parse().unwrap());
-                            let volume = from_float(update.new_quantity.parse().unwrap());
-                            let limit = Limit::new(price, volume, self.name.clone(), update.event_time.clone());
-                            sell_tree.insert(price, limit);
+                            Book::check_insert(limit, sell_tree);
                         },
                         "bid" => {
-                            let price = from_float(update.price_level.parse().unwrap());
-                            let volume = from_float(update.new_quantity.parse().unwrap());
-                            let limit = Limit::new(price, volume, self.name.clone(), update.event_time.clone());
-                            buy_tree.insert(price, limit);
+                            Book::check_insert(limit, buy_tree);
                         },
                         _ => println!("Could not determine whether the type of the order: {:?}\n", update.side.as_str())
                     }
@@ -141,6 +139,7 @@ impl VenueFunctionality for CoinbaseBook {
             Err(e) => {
                 print("Could not parse incoming data");
                 print(e);
+                print(data);
             }
         }
     }

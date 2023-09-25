@@ -1,8 +1,7 @@
-use std::{cmp::Reverse, time::Instant};
-use std::ops::Add;
+use std::{cmp::Reverse};
 use ordered_float::NotNan;
 use std::collections::BTreeMap;
-use chrono::{Local, DateTime, Timelike};
+use chrono::Local;
 
 use crate::utils::from_float;
 
@@ -48,7 +47,7 @@ impl Book {
     origin to the existing node's volumes
     And then in each case we update the total_volume as well
     */
-    pub fn check_insert(self, limit: &mut Limit, tree: &mut BTreeMap<MinNonNan, Limit>){
+    pub fn check_insert(limit: Limit, tree: &mut BTreeMap<MinNonNan, Limit>){
         if let Some(node) = tree.get_mut(&limit.limit_price.clone()){
             for i in 0..node.volumes.len(){
                 // if we find a node and the same volume origin as the incoming limit
@@ -69,6 +68,11 @@ impl Book {
             // if we never found a node, this also has a total_volume equal to the origin volume
             // in the other cases, the total_volume of the incoming limit is ignored
             tree.insert(limit.limit_price, limit.clone());
+        }
+        if let Some(node) = tree.get(&limit.limit_price){
+            if node.total_volume == from_float(0.0){
+                tree.remove(&limit.limit_price);
+            }
         }
     }
 }
