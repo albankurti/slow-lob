@@ -124,7 +124,7 @@ impl VenueFunctionality for CoinbaseBook {
                 for update in res.events[0].updates.iter(){
                     let price = from_float(update.price_level.parse().unwrap());
                     let volume = vec![(from_float(update.new_quantity.parse().unwrap()), self.name.clone())];
-                    let mut limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
+                    let limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
                     match update.side.as_str() {
                         "ask" | "offer" => {
                             Book::check_insert(limit, sell_tree);
