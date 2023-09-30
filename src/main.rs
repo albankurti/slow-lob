@@ -3,15 +3,15 @@ mod utils;
 mod venues;
 mod feedback;
 use feedback::{feedback};
-use tokio::net::TcpListener;
+
 use tokio::join;
 use orderbook::Book;
-use utils::{print, export_txt, read_keys};
+use utils::{read_keys};
 use std::sync::{Arc, Mutex};
-use std::env;
+
 use venues::binance::BinanceBook;
 use venues::coinbase::CoinbaseBook;
-use venues::upbit::UpbitBook;
+
 use venues::venue_traits::VenueFunctionality;
 
 #[tokio::main]

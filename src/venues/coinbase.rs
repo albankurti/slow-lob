@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 use std::{time,env};
-use sha2::{Sha256, Sha512, Digest};
+use sha2::{Sha256, Digest};
 use hmac::{Hmac, Mac};
-use std::sync::{Arc, Mutex, MutexGuard};
-use serde_json::{json, Error};
+use std::sync::{Arc, Mutex};
+use serde_json::{json};
 use serde::{Deserialize, Serialize};
-use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
-use crate::utils::{from_float, print, export_txt};
+use websocket::{client::builder::ClientBuilder, message::OwnedMessage};
+use crate::utils::{from_float, print};
 use crate::venues::venue_traits::VenueFunctionality;
 use crate::orderbook::{Limit, Book};
 use std::cmp::Reverse;
@@ -54,11 +54,11 @@ impl CoinbaseBook{
         let prehash: String = format!("{}{}{}", timestamp, &self.channel, product_ids_string);
 
         type HmacSha256 = Hmac<Sha256>;
-        let mut mac = HmacSha256::new_from_slice(&self.secret.as_bytes()).unwrap();
+        let mut mac = HmacSha256::new_from_slice(self.secret.as_bytes()).unwrap();
         mac.update(prehash.as_bytes());
         let code_bytes = mac.finalize().into_bytes();
 
-        return hex::encode(&code_bytes.to_vec());
+        hex::encode(code_bytes)
     }
 
     pub fn get_api_key() -> String {

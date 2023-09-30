@@ -1,14 +1,14 @@
 use std::collections::BTreeMap;
 use serde_json::json;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
-use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
+use websocket::{client::builder::ClientBuilder, message::OwnedMessage};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use crate::venues::venue_traits::VenueFunctionality;
 use crate::orderbook::{Limit, Book};
 use std::cmp::Reverse;
-use crate::utils::{from_float, print, export_txt};
+use crate::utils::{from_float, print};
 use ordered_float::NotNan;
 
 type MinNonNan = Reverse<NotNan<f64>>;

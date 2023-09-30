@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use ordered_float::NotNan;
 use std::fs::File;
 use std::env;
-use std::io::{Write, Result, self, BufRead};
+use std::io::{Write, self, BufRead};
 
 pub fn merge(vec1: Vec<usize>, vec2: Vec<usize>) -> Vec<usize> {
     let mut vec: Vec<usize> = Vec::with_capacity(vec1.len() + vec2.len());

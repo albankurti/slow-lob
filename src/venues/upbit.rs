@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex, MutexGuard};
-use std::process::exit;
-use std::{time,env};
-use sha2::{Sha256, Sha512, Digest};
-use hmac::{Hmac, Mac};
+use std::sync::{Arc, Mutex};
+
+
+use sha2::{Digest};
+use hmac::{Mac};
 use serde_json::json;
-use serde::{Deserialize, Serialize};
-use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
-use rand::{Rng, thread_rng, random};
+
+use websocket::{client::builder::ClientBuilder, message::OwnedMessage};
+use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use crate::venues::venue_traits::VenueFunctionality;
 use crate::orderbook::Limit;
@@ -27,7 +27,7 @@ pub struct UpbitResponse{
 }
 
 impl VenueFunctionality for UpbitBook{
-    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
+    fn subscribe(&self, _buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, _sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)

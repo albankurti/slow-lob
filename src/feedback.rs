@@ -1,16 +1,16 @@
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::protocol::Message;
-use tokio_tungstenite::tungstenite::handshake::server::Request;
+
 use tokio_tungstenite::accept_async;
 use ordered_float::NotNan;
-use crate::orderbook::{Limit, Book};
+use crate::orderbook::{Limit};
 use std::{cmp::Reverse};
 use std::collections::BTreeMap;
-use tokio_tungstenite::WebSocketStream;
+
 use futures::SinkExt;
 use futures::StreamExt;
-use crate::utils::{print};
-use std::sync::{Arc, Mutex, MutexGuard};
+
+use std::sync::{Arc};
 
 pub async fn feedback(
     buy_tree: Arc<std::sync::Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>,
@@ -30,7 +30,10 @@ pub async fn feedback(
 
         loop {
             {
-                let data = format!("{:?}", buy_tree.lock().unwrap());
+                let data = format!("BUY \n{:?}", buy_tree.lock().unwrap());
+                let message = Message::Text(data);
+                sender.send(message).await.unwrap();
+                let data = format!("SELL \n{:?}", sell_tree.lock().unwrap());
                 let message = Message::Text(data);
                 sender.send(message).await.unwrap();
             }
