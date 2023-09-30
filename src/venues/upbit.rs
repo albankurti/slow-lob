@@ -5,12 +5,11 @@ use std::sync::{Arc, Mutex};
 use sha2::{Digest};
 use hmac::{Mac};
 use serde_json::json;
-
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use crate::venues::venue_traits::VenueFunctionality;
-use crate::orderbook::Limit;
+use crate::orderbook::{Limit, WrappedReverse};
 use std::cmp::Reverse;
 use ordered_float::NotNan;
 type MinNonNan = Reverse<NotNan<f64>>;
@@ -27,7 +26,7 @@ pub struct UpbitResponse{
 }
 
 impl VenueFunctionality for UpbitBook{
-    fn subscribe(&self, _buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, _sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
+    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)
@@ -74,7 +73,7 @@ impl VenueFunctionality for UpbitBook{
         // TODO
     }
 
-    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
+    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>) {
         todo!();
     }
 }

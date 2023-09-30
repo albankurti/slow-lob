@@ -4,6 +4,7 @@ use ordered_float::NotNan;
 use std::fs::File;
 use std::env;
 use std::io::{Write, self, BufRead};
+use crate::orderbook::WrappedReverse;
 
 pub fn merge(vec1: Vec<usize>, vec2: Vec<usize>) -> Vec<usize> {
     let mut vec: Vec<usize> = Vec::with_capacity(vec1.len() + vec2.len());
@@ -31,9 +32,8 @@ pub fn merge(vec1: Vec<usize>, vec2: Vec<usize>) -> Vec<usize> {
     vec
 }
 
-type MinNonNan = Reverse<NotNan<f64>>;
-pub fn from_float(float: f64) -> Reverse<NotNan<f64>> {
-    Reverse(NotNan::new(float).unwrap())
+pub fn from_float(float: f64) -> WrappedReverse {
+    WrappedReverse(Reverse(NotNan::new(float).unwrap()))
 }
 
 pub fn print<T: Debug>(any: T) {

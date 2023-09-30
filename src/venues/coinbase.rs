@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage};
 use crate::utils::{from_float, print};
 use crate::venues::venue_traits::VenueFunctionality;
-use crate::orderbook::{Limit, Book};
+use crate::orderbook::{Limit, Book, WrappedReverse};
 use std::cmp::Reverse;
 use ordered_float::NotNan;
 
@@ -71,7 +71,7 @@ impl CoinbaseBook{
 }
 
 impl VenueFunctionality for CoinbaseBook {
-    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>){
+    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>){
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)
@@ -119,7 +119,7 @@ impl VenueFunctionality for CoinbaseBook {
         //TODO
     }
 
-    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
+    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<WrappedReverse, Limit>>>) {
         match serde_json::from_str::<CoinbaseResponse>(&data) {
             Ok(res) => {
                 for update in res.events[0].updates.iter(){

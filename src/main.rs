@@ -51,11 +51,15 @@ async fn main() {
     });
 
     let buy_tree = Arc::clone(&buy_tree_original);
-    let sell_tree = Arc::clone(&sell_tree_original);
-    let handle_stream = tokio::spawn(async move {
-        feedback(buy_tree, sell_tree).await;
+    let handle_stream_buy = tokio::spawn(async move {
+        feedback(buy_tree, 8080).await;
     });
 
-    _ = join!(handle_binance, handle_coinbase, handle_stream);
+    let sell_tree = Arc::clone(&sell_tree_original);
+    let handle_stream_sell = tokio::spawn(async move {
+        feedback(sell_tree, 8081).await;
+    });
+
+    _ = join!(handle_binance, handle_coinbase, handle_stream_buy, handle_stream_sell);
 // 
 }
