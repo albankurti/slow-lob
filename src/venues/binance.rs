@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use serde_json::json;
+use std::sync::{Arc, Mutex, MutexGuard};
 use serde::{Deserialize, Serialize};
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
 use rand::{Rng, thread_rng};
@@ -7,7 +8,7 @@ use rand::distributions::Alphanumeric;
 use crate::venues::venue_traits::VenueFunctionality;
 use crate::orderbook::{Limit, Book};
 use std::cmp::Reverse;
-use crate::utils::{from_float, print};
+use crate::utils::{from_float, print, export_txt};
 use ordered_float::NotNan;
 
 type MinNonNan = Reverse<NotNan<f64>>;
@@ -36,7 +37,7 @@ struct Result{
 
 
 impl VenueFunctionality for BinanceBook{
-    fn subscribe(&self, buy_tree: &mut BTreeMap<MinNonNan, Limit>, sell_tree: &mut BTreeMap<MinNonNan, Limit>) {
+    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)
@@ -85,20 +86,20 @@ impl VenueFunctionality for BinanceBook{
     }
 
     // Needs to parse a Text file and create a
-    fn feed_orderbook(&self, data: String, buy_tree: &mut BTreeMap<MinNonNan,Limit>, sell_tree: &mut BTreeMap<MinNonNan,Limit>) {
+    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         match serde_json::from_str::<BinanceResponse>(&data){
             Ok(res) => {
                 for ask in res.result.asks{
                     let price = from_float(ask[0].parse().unwrap());
                     let volume = vec![(from_float(ask[1].parse().unwrap()), self.name.clone())];
                     let limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
-                    Book::check_insert(limit, sell_tree);
+                    Book::check_insert(limit, &mut sell_tree.lock().unwrap());
                 }
                 for bid in res.result.bids{
                     let price = from_float(bid[0].parse().unwrap());
                     let volume = vec![(from_float(bid[1].parse().unwrap()), self.name.clone())];
                     let limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
-                    Book::check_insert(limit, buy_tree);
+                    Book::check_insert(limit, &mut buy_tree.lock().unwrap());
                 }
             }
             Err(e) => {

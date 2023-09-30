@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 use std::{time,env};
 use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
+use std::sync::{Arc, Mutex, MutexGuard};
 use serde_json::{json, Error};
 use serde::{Deserialize, Serialize};
 use websocket::{client::builder::ClientBuilder, message::OwnedMessage, result::WebSocketError};
-use crate::utils::{from_float, print};
+use crate::utils::{from_float, print, export_txt};
 use crate::venues::venue_traits::VenueFunctionality;
 use crate::orderbook::{Limit, Book};
 use std::cmp::Reverse;
@@ -70,7 +71,7 @@ impl CoinbaseBook{
 }
 
 impl VenueFunctionality for CoinbaseBook {
-    fn subscribe(&self, buy_tree: &mut BTreeMap<MinNonNan, Limit>, sell_tree: &mut BTreeMap<MinNonNan, Limit>){
+    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>){
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)
@@ -118,7 +119,7 @@ impl VenueFunctionality for CoinbaseBook {
         //TODO
     }
 
-    fn feed_orderbook(&self, data: String, buy_tree: &mut BTreeMap<MinNonNan, Limit>, sell_tree: &mut BTreeMap<MinNonNan, Limit>) {
+    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         match serde_json::from_str::<CoinbaseResponse>(&data) {
             Ok(res) => {
                 for update in res.events[0].updates.iter(){
@@ -127,10 +128,10 @@ impl VenueFunctionality for CoinbaseBook {
                     let limit = Limit::new(price, volume.clone(), volume[0].0, chrono::Local::now());
                     match update.side.as_str() {
                         "ask" | "offer" => {
-                            Book::check_insert(limit, sell_tree);
+                            Book::check_insert(limit, &mut sell_tree.lock().unwrap());
                         },
                         "bid" => {
-                            Book::check_insert(limit, buy_tree);
+                            Book::check_insert(limit, &mut buy_tree.lock().unwrap());
                         },
                         _ => println!("Could not determine whether the type of the order: {:?}\n", update.side.as_str())
                     }

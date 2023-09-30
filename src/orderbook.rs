@@ -1,9 +1,10 @@
 use std::{cmp::Reverse};
 use ordered_float::NotNan;
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::collections::BTreeMap;
 use chrono::Local;
 
-use crate::utils::from_float;
+use crate::utils::{from_float, print, export_txt};
 
 type MinNonNan = Reverse<NotNan<f64>>;
 
@@ -75,4 +76,5 @@ impl Book {
             }
         }
     }
+
 }

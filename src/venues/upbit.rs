@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::process::exit;
 use std::{time,env};
 use sha2::{Sha256, Sha512, Digest};
@@ -26,7 +27,7 @@ pub struct UpbitResponse{
 }
 
 impl VenueFunctionality for UpbitBook{
-    fn subscribe(&self, buy_tree: &mut BTreeMap<MinNonNan, Limit>, sell_tree: &mut BTreeMap<MinNonNan, Limit>) {
+    fn subscribe(&self, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         let mut websocket = ClientBuilder::new(&self.base_ws)
         .unwrap()
         .connect(None)
@@ -73,7 +74,7 @@ impl VenueFunctionality for UpbitBook{
         // TODO
     }
 
-    fn feed_orderbook(&self, data: String, buy_tree: &mut BTreeMap<MinNonNan, Limit>, sell_tree: &mut BTreeMap<MinNonNan, Limit>) {
+    fn feed_orderbook(&self, data: String, buy_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>, sell_tree: &mut Arc<Mutex<BTreeMap<Reverse<NotNan<f64>>, Limit>>>) {
         todo!();
     }
 }
